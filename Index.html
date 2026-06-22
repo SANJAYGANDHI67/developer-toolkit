@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevKit — Developer Toolkit</title>
+  <meta name="description" content="A modern developer toolkit: password & QR generators, JSON formatter, Base64, color palettes, UUIDs, text utilities and a live Markdown previewer." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ============ HEADER ============ -->
+  <header class="app-header glass">
+    <div class="brand" id="brandHome">
+      <span class="brand-logo">DK</span>
+      <span class="brand-text">
+        <h1>DevKit</h1>
+        <p>Developer Toolkit</p>
+      </span>
+    </div>
+    <div class="header-search">
+      <input id="searchInput" type="text" placeholder="Search tools…" aria-label="Search tools" />
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <span class="theme-icon">🌙</span>
+    </button>
+  </header>
+
+  <main class="app-main">
+    <!-- ============ DASHBOARD VIEW ============ -->
+    <section id="dashboardView" class="view active">
+      <div class="hero">
+        <h2>Your everyday developer toolkit</h2>
+        <p>Fast, private, and offline-friendly utilities. Everything runs in your browser — nothing is sent to a server.</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card glass">
+          <span class="stat-label">Total Tools</span>
+          <span class="stat-value" id="statTotal">0</span>
+        </div>
+        <div class="stat-card glass">
+          <span class="stat-label">Usage Counter</span>
+          <span class="stat-value" id="statUsage">0</span>
+        </div>
+        <div class="stat-card glass">
+          <span class="stat-label">Most Used Tool</span>
+          <span class="stat-value" id="statMostUsed">—</span>
+        </div>
+        <div class="stat-card glass">
+          <span class="stat-label">Recent Tool</span>
+          <span class="stat-value" id="statRecent">—</span>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters" id="filters">
+        <button class="filter-btn active" data-category="all">All</button>
+        <button class="filter-btn" data-category="generators">Generators</button>
+        <button class="filter-btn" data-category="converters">Converters</button>
+        <button class="filter-btn" data-category="design">Design</button>
+        <button class="filter-btn" data-category="text">Text</button>
+      </div>
+
+      <!-- Tool cards injected here -->
+      <div class="tools-grid" id="toolsGrid"></div>
+      <p class="no-results" id="noResults" hidden>No tools match your search.</p>
+    </section>
+
+    <!-- ============ TOOL VIEW ============ -->
+    <section id="toolView" class="view">
+      <button class="back-btn" id="backBtn">← Back to all tools</button>
+      <div class="tool-panel glass">
+        <div class="tool-panel-head">
+          <span class="tool-panel-icon" id="toolPanelIcon"></span>
+          <div>
+            <h2 id="toolPanelTitle"></h2>
+            <p id="toolPanelDesc"></p>
+          </div>
+        </div>
+        <div class="tool-panel-body" id="toolPanelBody"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>DevKit · Built with care · Runs entirely in your browser · © <span id="year"></span></p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ============ TOOL TEMPLATES ============ -->
+  <!-- A. Password Generator -->
+  <template id="tpl-password">
+    <div class="field">
+      <label>Length: <span id="pwLenLabel">16</span></label>
+      <input type="range" id="pwLength" min="4" max="64" value="16" />
+    </div>
+    <div class="checkbox-row">
+      <label class="check"><input type="checkbox" id="pwUpper" checked /> Uppercase</label>
+      <label class="check"><input type="checkbox" id="pwLower" checked /> Lowercase</label>
+      <label class="check"><input type="checkbox" id="pwNumbers" checked /> Numbers</label>
+      <label class="check"><input type="checkbox" id="pwSymbols" /> Symbols</label>
+    </div>
+    <div class="output-row">
+      <input class="output-field" id="pwOutput" type="text" readonly />
+      <button class="btn" data-copy="pwOutput">Copy</button>
+    </div>
+    <button class="btn primary block" id="pwGenerate">Generate Password</button>
+  </template>
+
+  <!-- B. QR Code Generator -->
+  <template id="tpl-qr">
+    <div class="field">
+      <label>Text or URL</label>
+      <textarea id="qrText" rows="3" placeholder="https://example.com"></textarea>
+    </div>
+    <button class="btn primary block" id="qrGenerate">Generate QR Code</button>
+    <div class="qr-result" id="qrResult"></div>
+    <button class="btn block" id="qrDownload" hidden>Download PNG</button>
+  </template>
+
+  <!-- C. JSON Formatter -->
+  <template id="tpl-json">
+    <div class="field">
+      <label>Input</label>
+      <textarea id="jsonInput" rows="6" placeholder='{ "hello": "world" }'></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="jsonFormat">Format</button>
+      <button class="btn" id="jsonMinify">Minify</button>
+      <button class="btn" id="jsonValidate">Validate</button>
+    </div>
+    <div class="message" id="jsonMessage" hidden></div>
+    <div class="field">
+      <label>Output</label>
+      <textarea class="output-field" id="jsonOutput" rows="6" readonly></textarea>
+    </div>
+  </template>
+
+  <!-- D. Base64 Encode/Decode -->
+  <template id="tpl-base64">
+    <div class="field">
+      <label>Input</label>
+      <textarea id="b64Input" rows="5" placeholder="Text to encode or decode"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="b64Encode">Encode</button>
+      <button class="btn" id="b64Decode">Decode</button>
+    </div>
+    <div class="message" id="b64Message" hidden></div>
+    <div class="field">
+      <label>Output</label>
+      <textarea class="output-field" id="b64Output" rows="5" readonly></textarea>
+    </div>
+  </template>
+
+  <!-- E. Color Palette -->
+  <template id="tpl-colors">
+    <button class="btn primary block" id="colorsGenerate">Generate Palette</button>
+    <div class="palette" id="palette"></div>
+    <p class="hint">Click any color to copy its HEX code.</p>
+  </template>
+
+  <!-- F. UUID Generator -->
+  <template id="tpl-uuid">
+    <div class="field">
+      <label>How many: <span id="uuidCountLabel">5</span></label>
+      <input type="range" id="uuidCount" min="1" max="20" value="5" />
+    </div>
+    <button class="btn primary block" id="uuidGenerate">Generate UUIDs</button>
+    <div class="field">
+      <label>Output</label>
+      <textarea class="output-field" id="uuidOutput" rows="6" readonly></textarea>
+    </div>
+    <button class="btn block" data-copy="uuidOutput">Copy All</button>
+  </template>
+
+  <!-- G. Text Utilities -->
+  <template id="tpl-text">
+    <div class="field">
+      <label>Text</label>
+      <textarea id="textInput" rows="6" placeholder="Type or paste text here…"></textarea>
+    </div>
+    <div class="text-stats">
+      <span>Words: <strong id="textWords">0</strong></span>
+      <span>Characters: <strong id="textChars">0</strong></span>
+      <span>Sentences: <strong id="textSentences">0</strong></span>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="textUpper">UPPERCASE</button>
+      <button class="btn" id="textLower">lowercase</button>
+      <button class="btn" id="textTitle">Title Case</button>
+      <button class="btn" id="textTrim">Trim Spaces</button>
+    </div>
+  </template>
+
+  <!-- H. Markdown Previewer -->
+  <template id="tpl-markdown">
+    <div class="md-wrap">
+      <div class="field">
+        <label>Markdown</label>
+        <textarea id="mdInput" rows="14"></textarea>
+      </div>
+      <div class="field">
+        <label>Preview</label>
+        <div class="md-preview" id="mdPreview"></div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ============ LIBRARIES (CDN) ============ -->
+  <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
